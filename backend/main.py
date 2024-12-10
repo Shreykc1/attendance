@@ -4,8 +4,9 @@ import pypdf
 from collections import defaultdict
 from datetime import datetime
 import json
-from flask.ext
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app, resources={r"/attendance": {"origins": "http://localhost:5173"}})
 output_data = {}  # Global variable to store processed data
 
 def extract_user_info(text):
@@ -139,8 +140,11 @@ def process_attendance():
 
 @app.route('/attendance', methods=['POST'])
 def attendance():
-    return jsonify(output_data), 200
+    process_attendance()  # Process the data
+    response = jsonify(output_data)
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+    response.headers.add('Access-Control-Allow-Methods', 'GET')
+    return response, 200
 
 if __name__ == "__main__":
-    process_attendance()  # Preprocess the attendance data
-    app.run(host="0.0.0.0", port=3000)
+    app.run(host="0.0.0.0", port=3000, debug=True)

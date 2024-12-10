@@ -11,74 +11,104 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { useEffect, useState } from 'react'
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-]
+
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
+  subject_precentages: {
+    label: "Subject Precentages",
     color: "hsl(var(--chart-1))",
   },
 }
+type Attendance = {
+    subject: string;
+    percentage: number;
+}
 
-export default function Charts() {
+export default function Charts({data, setData}: {data: any, setData: any}) {
+    const [attendance, setAttendance] = useState<Attendance[]>([]);
 
-    const [attendance, setAttendance] = useState();
+
+    const fullSubjectNames: { [key: string]: string } = {
+        "COMPUTER SCIENCE PRACTICAL XIII": "PRACT XIII",
+        "COMPUTER SCIENCE PRACTICAL XIV": "PRACT XIV",
+        "DATA SCIENCE": "Data Science",
+        "ETHICAL HACKING & CYBER FORENSICS": "Ethical Hacking",
+        "INFORMATON RETRIEVAL": "Info Retrieval",
+        "PROJECT IMPLEMENTATION": "Project",
+        "SKILL ENHANCEMENT: HUMAN COMPUTER INTERA": "HCI",
+        "WIRELESS SENSOR NETWORKS AND MOBILE COMM": "WSN"
+    };
+
 
     useEffect(() => {
-      getData()
+        getData()
     }, [])
 
+    const getData = async () => {
+        try {
+            const response = await fetch("http://localhost:3000/attendance", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                },
+            });
 
-    const getData = async () =>{
-        const result =  await fetch('http://127.0.0.1:3000/attendance',{
-            method: "POST"
-        }).then(
-            res => {
-                // setAttendance(res.json());
-                console.log(res)
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        )
+
+            const data = await response.json();
+            // Transform the data for the chart
+            const formattedData = Object.entries(data.subject_percentages).map(([subject, percentage]) => ({
+                subject: fullSubjectNames[subject] || subject, // Use mapping or original if not found
+                percentage: Number(percentage)
+            }));
+            setAttendance(formattedData);
+            setData(data);
+            console.log(data);
+        } catch (error) {
+            console.error('Error fetching attendance data:', error);
+        }
     }
-  return (
+
+    return (
         <div className="overflow-x-hidden flex justify-center items-center h-screen w-screen">
-            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              top: 20,
-              bottom:20
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Bar dataKey="desktop" fill="#2563eb" radius={4} >
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground"
-                fontSize={12}
-              />
-            </Bar>
-          </BarChart>
-        </ChartContainer>
+            <ChartContainer config={chartConfig} className="min-h-[400px] w-full px-4">
+                <BarChart
+                    data={attendance}
+                    margin={{
+                        top: 20,
+                        bottom: 10
+                    }}
+                >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                        dataKey="subject"
+                        tickLine={true}
+                        axisLine={false}
+                        angle={-45}
+                        textAnchor="end"
+                        height={120}
+                        tick={{ fill: '#666', fontSize: 12 }}  // Customized tick style
+                    />
+                     <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent />}
+                />
+                    <Bar
+                        dataKey="percentage"
+                        fill="#2563eb"
+                        radius={[4, 4, 0, 0]}
+                    >
+                        <LabelList
+                            dataKey="percentage"
+                            position="top"
+                            formatter={(value: number) => `${Math.round(value)}%`}
+                            className="fill-foreground"
+                        />
+                    </Bar>
+                </BarChart>
+            </ChartContainer>
         </div>
-  )
+    )
 }
