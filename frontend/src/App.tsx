@@ -2,11 +2,14 @@
 import './App.css'
 import Charts from '../components/Charts'
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 function App() {
     const [data, setData] = useState();
-
+    const [isLoading, setIsLoading] = useState(false);
     return (
-        <div className='min-h-screen w-screen bg-zinc-950 text-white tracking-tight flex justify-center items-center overflow-x-hidden flex-col font-geist'>
+        <>
+            {isLoading && <div className='w-screen h-screen bg-black/80 text-white flex justify-center items-center'><Loader2 className='animate-spin'/></div>}
+            <div className='min-h-screen w-screen bg-zinc-950 text-white tracking-tight flex justify-center items-center overflow-x-hidden flex-col font-geist'>
             <div className='max-w-7xl w-full px-4 py-10 space-y-8 mt-10'>
                 {/* Header Section */}
                 <div className='space-y-4 text-center '>
@@ -76,11 +79,36 @@ function App() {
                 </div>
 
                 {/* Charts Section */}
-                <div className='h-[800px] w-[800px] flex justify-center items-center ml-60 relative bottom-20'>
-                    <Charts />
+                <div className='h-[600px] w-[800px] flex justify-center items-center ml-60 relative overflow-hidden'>
+                    <Charts isLoading={isLoading} setIsLoading={setIsLoading} setData={setData}/>
+                </div>
+
+                {/* Skippable Lectures  */}
+                <div className='w-full flex flex-col'>
+                    <h1 className='text-4xl overflow-hidden'>Lects You Can Miss</h1>
+                    <div className='flex w-full mt-4 gap-4'>
+                    {data && data.skippable_lectures &&
+                        Object.keys(data.skippable_lectures).map((key) => {
+
+                            if (data.skippable_lectures[key] !== 0) {
+                                return (
+                                    <div
+                                        key={key}
+                                        className='w-full sm:w-1/2 lg:w-1/3 bg-zinc-900/50 rounded-lg p-6 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col justify-between'
+                                    >
+                                        <p className="text-lg font-medium">{key}</p>
+                                        <h2 className='text-4xl font-bold mt-2 overflow-hidden text-green-400'>{data.skippable_lectures[key]}</h2>
+                                    </div>
+                                );
+                            }
+                        return null;
+                        })
+                     }
+                    </div>
                 </div>
             </div>
         </div>
+        </>
     );
 }
 

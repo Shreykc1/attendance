@@ -11,6 +11,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 
 
 const chartConfig = {
@@ -23,8 +24,13 @@ type Attendance = {
     subject: string;
     percentage: number;
 }
+type ChartsProps = {
+    setData: any;
+    isLoading: boolean;
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-export default function Charts({data, setData}: {data: any, setData: any}) {
+export default function Charts({ setData, isLoading, setIsLoading}: ChartsProps) {
     const [attendance, setAttendance] = useState<Attendance[]>([]);
 
 
@@ -46,6 +52,7 @@ export default function Charts({data, setData}: {data: any, setData: any}) {
 
     const getData = async () => {
         try {
+            setIsLoading(true);
             const response = await fetch("http://localhost:3000/attendance", {
                 method: 'POST',
                 headers: {
@@ -54,6 +61,7 @@ export default function Charts({data, setData}: {data: any, setData: any}) {
             });
 
             if (!response.ok) {
+                setIsLoading(false);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
@@ -66,14 +74,20 @@ export default function Charts({data, setData}: {data: any, setData: any}) {
             setAttendance(formattedData);
             setData(data);
             console.log(data);
+            setIsLoading(false);
+
         } catch (error) {
             console.error('Error fetching attendance data:', error);
+            setIsLoading(false);
+
         }
     }
 
     return (
-        <div className="overflow-x-hidden flex justify-center items-center h-screen w-screen">
-            <ChartContainer config={chartConfig} className="min-h-[400px] w-full px-4">
+        <>
+            {isLoading && <div className='w-screen h-screen bg-black/80 text-white flex justify-center  items-center'><Loader2 className='animate-spin'/></div>}
+            <div className="overflow-x-hidden flex justify-center items-center h-screen w-screen ">
+            <ChartContainer config={chartConfig} className="min-h-[400px] w-full px-4 ">
                 <BarChart
                     data={attendance}
                     margin={{
@@ -110,5 +124,6 @@ export default function Charts({data, setData}: {data: any, setData: any}) {
                 </BarChart>
             </ChartContainer>
         </div>
+        </>
     )
 }
